@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QLabel
 from PyQt5.QtGui import QPainter, QPen, QColor, QPalette, QBrush, QPixmap, QRadialGradient
 from PyQt5.QtCore import Qt, QPoint, QTimer
 import traceback
@@ -17,8 +17,19 @@ def run_with_exc(f):
             QMessageBox.about(window, 'Error', exc_info)
     return call
 
+class Turnlabel(QLabel):
 
-class GomokuWindow(QMainWindow):
+    def changeturn(self, turn):
+        if turn == 0:
+            self.setText("Player1 Turn")
+            self.setStyleSheet("color:rgb(10,10,10,255);font-size:13px;font-weight:bold;font-family:Roman times;")
+        elif turn == 1:
+            self.setText("Player2 Turn")
+            self.setStyleSheet("color:rgb(10,10,10,255);font-size:13px;font-weight:bold;font-family:Roman times;")
+
+
+
+class TwoPlayerGomokuWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
@@ -29,12 +40,15 @@ class GomokuWindow(QMainWindow):
         self.operate_status = 0
         self.flash_pieces = ((-1, -1),)
         self.turn = 0
+        self.label = Turnlabel(self)
+        self.label.changeturn(self.turn)
+        self.label.show()
 
     def init_ui(self):
         """init game interface"""
         # 1. title,size,color
         self.setObjectName('MainWindow')
-        self.setWindowTitle('Single Player Mode')
+        self.setWindowTitle('Two Player Mode')
         self.setFixedSize(650, 650)
         palette = QPalette()
         palette.setBrush(QPalette.Window, QBrush(QPixmap('imgs/wooden.jpg')))
@@ -144,25 +158,20 @@ class GomokuWindow(QMainWindow):
                 game_x = int((mouse_x + 15) // 40) - 1
                 game_y = int((mouse_y + 15) // 40) - 1
             else:  # wrong place
+                # QMessageBox.about(self, "error!", "wrong place")
                 return
             if self.g.g_map[game_x][game_y] == 0:
                 self.g.move_1step(True, game_x, game_y, self.turn)
-            else:
-                QMessageBox.about(self, "error!", "wrong place!")
-                return
+                self.turn = (self.turn + 1) % 2
+                self.label.changeturn(self.turn)
+            elif self.g.g_map[game_x][game_y] != 0:
+                QMessageBox.about(self, "error!", "wrong place")
             # exec game loop
             res, self.flash_pieces = self.g.game_result(show=True)
             if res != 0:
                 self.repaint(0, 0, 650, 650)
                 self.game_restart(res)
                 return
-            self.g.ai_play_1step()
-            res, self.flash_pieces = self.g.game_result(show=True)
-            if res != 0:
-                self.repaint(0, 0, 650, 650)
-                self.game_restart(res)
-                return
-            self.repaint(0, 0, 650, 650)
 
     @run_with_exc
     def end_flash(self):
@@ -176,9 +185,9 @@ class GomokuWindow(QMainWindow):
             self.end_timer.stop()
             # 1. Display Game Over message
             if self.res == 1:
-                QMessageBox.about(self, 'Game Over', 'Player Win!')
+                QMessageBox.about(self, 'Game Over', 'Player1 Win!')
             elif self.res == 2:
-                QMessageBox.about(self, 'Game Over', 'Computer Win!')
+                QMessageBox.about(self, 'Game Over', 'Player2 Win!')
             elif self.res == 3:
                 QMessageBox.about(self, 'Game Over', 'Draw!')
             else:
@@ -196,4 +205,5 @@ class GomokuWindow(QMainWindow):
         self.res = res
         self.operate_status = 1
         self.end_timer.start(300)
-
+        self.turn = 0
+        self.label.changeturn(self.turn)

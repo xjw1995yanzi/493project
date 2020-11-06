@@ -10,7 +10,7 @@ class Gomoku:
         self.cur_step = 0  # count step
         self.max_search_steps = 2
 
-    def move_1step(self, input_by_window=False, pos_x=None, pos_y=None):
+    def move_1step(self, input_by_window=False, pos_x=None, pos_y=None, turn=None):
         """player move"""
         while 1:
             try:
@@ -19,9 +19,18 @@ class Gomoku:
                     pos_y = int(input('y: '))
                 if 0 <= pos_x <= 14 and 0 <= pos_y <= 14:
                     if self.g_map[pos_x][pos_y] == 0:
-                        self.g_map[pos_x][pos_y] = 1
+                        if turn == 0:
+                            self.g_map[pos_x][pos_y] = 1
+                        elif turn == 1:
+                            self.g_map[pos_x][pos_y] = 2
                         self.cur_step += 1
                         return
+                    else:
+                        # print("wrong place")
+                        break
+                else:
+                    # print("wrong place")
+                    break
             except ValueError:  # wrong input
                 continue
 
@@ -107,7 +116,7 @@ class Gomoku:
         st = time.time()
         ai.search(0, [set(), set()], self.max_search_steps)  # two turn as limit
         ed = time.time()
-        print('generate%d个节点，take %.3fsec，make the value in %.3fsec' % (len(ai.method_tree), ed - st, ai.t))
+        print('generate %d nodes，take %.3fsec，make the value in %.3fsec' % (len(ai.method_tree), ed - st, ai.t))
         if ai.next_node_dx_list[0] == -1:
             raise ValueError('ai.next_node_dx_list[0] == -1')
         ai_ope = ai.method_tree[ai.next_node_dx_list[0]].ope
